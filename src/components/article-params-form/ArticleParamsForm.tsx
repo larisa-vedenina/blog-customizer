@@ -5,7 +5,7 @@ import styles from './ArticleParamsForm.module.scss';
 
 export const ArticleParamsForm = () => {
 	return (
-		<>
+		<div>
 			<ArrowButton isOpen={false} onClick={() => {}} />
 			<aside className={styles.container}>
 				<form className={styles.form}>
@@ -15,6 +15,6 @@ export const ArticleParamsForm = () => {
 					</div>
 				</form>
 			</aside>
-		</>
+		</div>
 	);
 };
