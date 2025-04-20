@@ -22,15 +22,13 @@ import styles from './ArticleParamsForm.module.scss';
 
 interface ArticleParamsFormProps {
 	currentSettings: ArticleStateType; // текущие настройки статьи
-	onApply: (settings: ArticleStateType) => void; // коллбек при применении новых настроек
+	setCurrentSettings: (settings: ArticleStateType) => void; // коллбек при применении новых настроек
 }
-
 
 export const ArticleParamsForm = ({
 	currentSettings,
-	onApply
+	setCurrentSettings,
 }: ArticleParamsFormProps) => {
-
 	// Состояние для отслеживания видимости формы
 	const [isFormOpen, setIsFormOpen] = useState(false);
 
@@ -40,38 +38,10 @@ export const ArticleParamsForm = ({
 	// Ref для отслеживания кликов вне формы
 	const formRef = useRef<HTMLDivElement>(null);
 
-	// переключение видимости формы
-	const toggleFormVisibility = () => {
-		setIsFormOpen(!isFormOpen);
-	};
-
-	// обработчик изменения любого параметра
-	// paramName - имя изменяемого параметра (ключ из ArticleStateType)
-	// value - новое значение параметра
-	const handleParamChange = (paramName: keyof ArticleStateType, value: any) => {
-		setFormState({
-			...formState,
-			[paramName]: value,
-		});
-	};
-
-	// Обработчик отправки формы
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		// Передаем новые настройки
-		onApply(formState);
-
-		setIsFormOpen(false);
-	};
-
-	// Обработчик сброса формы к значениям по умолчанию
-	const handleReset = () => {
-		setFormState(defaultArticleState);
-		onApply(defaultArticleState);
-	};
-
 	// обработка кликов вне формы и нажатия Escape
 	useEffect(() => {
+		if (!isFormOpen) return;
+
 		// Обработчик клика вне формы
 		const handleClickOutside = (event: MouseEvent) => {
 			if (formRef.current && !formRef.current.contains(event.target as Node)) {
@@ -86,18 +56,47 @@ export const ArticleParamsForm = ({
 			}
 		};
 
-		// Добавляем обработчики только когда форма открыта
-		if (isFormOpen) {
-			document.addEventListener('mousedown', handleClickOutside);
-			document.addEventListener('keydown', handleEscapeKey);
-		}
+		document.addEventListener('mousedown', handleClickOutside);
+		document.addEventListener('keydown', handleEscapeKey);
 
-		// Удаляем обработчики при размонтировании компонента
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 			document.removeEventListener('keydown', handleEscapeKey);
 		};
 	}, [isFormOpen]);
+
+	// переключение видимости формы
+	const toggleFormVisibility = () => {
+		setIsFormOpen((prevState) => !prevState);
+	};
+
+	// обработчик изменения любого параметра
+	// paramName - имя изменяемого параметра (ключ из ArticleStateType)
+	// value - новое значение параметра
+	const handleParamChange = <T extends keyof ArticleStateType>(
+		paramName: T,
+		value: ArticleStateType[T]
+	) => {
+		setFormState({
+			...formState,
+			[paramName]: value,
+		});
+	};
+
+	// Обработчик отправки формы
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		// Передаем новые настройки
+		setCurrentSettings(formState);
+
+		setIsFormOpen(false);
+	};
+
+	// Обработчик сброса формы к значениям по умолчанию
+	const handleReset = () => {
+		setFormState(defaultArticleState);
+		setCurrentSettings(defaultArticleState);
+	};
 
 	return (
 		<div ref={formRef}>
@@ -107,15 +106,13 @@ export const ArticleParamsForm = ({
 				className={clsx(styles.container, {
 					[styles.container_open]: isFormOpen,
 				})}>
-
 				{/* Форма настроек */}
 				<form
 					className={styles.form}
 					onSubmit={handleSubmit}
 					onReset={handleReset}>
-
 					{/* Заголовок формы */}
-					<Text size={31} weight={800} uppercase>
+					<Text as='h2' size={31} weight={800} uppercase>
 						Настройки статьи
 					</Text>
 
@@ -123,7 +120,7 @@ export const ArticleParamsForm = ({
 					<Select
 						selected={formState.fontFamilyOption}
 						options={fontFamilyOptions}
-						title="Тип шрифта"
+						title='Тип шрифта'
 						onChange={(selected) =>
 							handleParamChange('fontFamilyOption', selected)
 						}
@@ -131,10 +128,10 @@ export const ArticleParamsForm = ({
 
 					{/* Размера текста кнопки */}
 					<RadioGroup
-						name="fontSize"
+						name='fontSize'
 						options={fontSizeOptions}
 						selected={formState.fontSizeOption}
-						title="Размер текста"
+						title='Размер текста'
 						onChange={(selected) =>
 							handleParamChange('fontSizeOption', selected)
 						}
@@ -144,7 +141,7 @@ export const ArticleParamsForm = ({
 					<Select
 						selected={formState.fontColor}
 						options={fontColors}
-						title="Цвет текста"
+						title='Цвет текста'
 						onChange={(selected) => handleParamChange('fontColor', selected)}
 					/>
 
@@ -154,7 +151,7 @@ export const ArticleParamsForm = ({
 					<Select
 						selected={formState.backgroundColor}
 						options={backgroundColors}
-						title="Цвет фона"
+						title='Цвет фона'
 						onChange={(selected) =>
 							handleParamChange('backgroundColor', selected)
 						}
@@ -164,16 +161,14 @@ export const ArticleParamsForm = ({
 					<Select
 						selected={formState.contentWidth}
 						options={contentWidthArr}
-						title="Ширина контента"
-						onChange={(selected) =>
-							handleParamChange('contentWidth', selected)
-						}
+						title='Ширина контента'
+						onChange={(selected) => handleParamChange('contentWidth', selected)}
 					/>
 
 					{/* Кнопки формы */}
 					<div className={styles.bottomContainer}>
-						<Button title="Сбросить" htmlType="reset" type="clear" />
-						<Button title="Применить" htmlType="submit" type="apply" />
+						<Button title='Сбросить' htmlType='reset' type='clear' />
+						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
 			</aside>
